@@ -1,7 +1,6 @@
 package uploader
 
 import (
-	"github.com/decentrio/ledger-reading/importer"
 	"github.com/stellar/go/xdr"
 )
 
@@ -61,7 +60,7 @@ type LegacyTradeInformation struct {
 
 type TradeInformation struct {
 	TradeType    string
-	Ticker       importer.Ticker
+	Ticker       ITicker
 	BaseVolume   uint64
 	TargetVolume uint64
 	Price        float64
@@ -69,7 +68,7 @@ type TradeInformation struct {
 
 type ProvideLiquidityInformation struct {
 	Sender              string          `json:"sender,omitempty"`
-	Ticker              importer.Ticker `json:"ticker,omitempty"`
+	Ticker              ITicker `json:"ticker,omitempty"`
 	BaseVolume          uint64          `json:"base_volume,omitempty"`
 	TargetVolume        uint64          `json:"target_volume,omitempty"`
 	ShareLiquidity      uint64          `json:"share_liquidity,omitempty"`
@@ -87,4 +86,23 @@ type Ticker struct {
 	BaseVolume     uint64 `json:"base_volume,omitempty"`      // base currency trade volume (24h)
 	TargetVolume   uint64 `json:"target_volume,omitempty"`    // target currency trade volume (24h)
 	LiquidityInUsd uint64 `json:"liquidity_in_usd,omitempty"` // liquidity in usd
+}
+
+type TokenPair struct {
+	BaseCurrency   string `json:"base_currency,omitempty"`   // token_a
+	TargetCurrency string `json:"target_currency,omitempty"` // token_b
+}
+
+type ITicker struct {
+	TickerId       string `json:"ticker_id,omitempty"`
+	BaseCurrency   string `json:"base_currency,omitempty"`   // token_a
+	TargetCurrency string `json:"target_currency,omitempty"` // token_b
+	PoolContract   string `json:"pool_contract,omitempty"`
+}
+
+type Token struct {
+	Symbol          string `json:"symbol,omitempty"`
+	Token           string `json:"token,omitempty"`
+	SorobanContract string `json:"soroban_contract,omitempty"`
+	Decimals        uint32 `json:"decimals,omitempty"`
 }

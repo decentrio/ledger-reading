@@ -5,7 +5,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/decentrio/ledger-reading/importer"
 	"github.com/stellar/go/ingest"
 	"github.com/stellar/go/xdr"
 )
@@ -78,7 +77,7 @@ func (u *Uploader) handleReceiveNewLedger(l xdr.LedgerCloseMeta) {
 	}
 }
 
-func (u *Uploader) GetPoolLiquidity(tx *PhoenixTransactionExtractor, ticker importer.Ticker) (share, base, target, totalInUsd uint64) {
+func (u *Uploader) GetPoolLiquidity(tx *PhoenixTransactionExtractor, ticker ITicker) (share, base, target, totalInUsd uint64) {
 	contractData := tx.GetContractDataEntry()
 	for _, cd := range contractData {
 		if cd.ContractId == ticker.PoolContract {
@@ -130,32 +129,9 @@ func getBaseTokenPrice(tradeType string, offerAmount uint64, returnAmount uint64
 	return price
 }
 
-func (u *Uploader) getTickerByTokenPair(offerTokenSorobanContract string, askedTokenSorobanContract string) (importer.Ticker, string, bool) {
+func (u *Uploader) getTickerByTokenPair(offerTokenSorobanContract string, askedTokenSorobanContract string) (ITicker, string, bool) {
 	// get token from soroban contract
-	offerToken, found := u.TokenList[offerTokenSorobanContract]
-	if !found {
-		return importer.Ticker{}, "", false
-	}
-
-	askedToken, found := u.TokenList[askedTokenSorobanContract]
-	if !found {
-		return importer.Ticker{}, "", false
-	}
-
-	// baseCurrency buy
-	pair := importer.GetTokenPair(askedToken.Token, offerToken.Token)
-	ticker, found := u.TickerList[pair]
-	if found {
-		return ticker, Buy, true
-	}
-	// baseCurrency sell
-	pair = importer.GetTokenPair(offerToken.Token, askedToken.Token)
-	ticker, found = u.TickerList[pair]
-	if found {
-		return ticker, Sell, true
-	}
-
-	return importer.Ticker{}, "", false
+	return ITicker{}, "", false
 }
 
 func getLedgerFromCloseMeta(ledgerCloseMeta xdr.LedgerCloseMeta) Ledger {

@@ -6,7 +6,6 @@ import (
 
 	db "github.com/decentrio/ledger-reading/database/handlers"
 	"github.com/decentrio/ledger-reading/database/models"
-	"github.com/decentrio/ledger-reading/importer"
 	"github.com/decentrio/ledger-reading/lib/service"
 	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/xdr"
@@ -20,9 +19,9 @@ type Uploader struct {
 	// ledgerQueue channel for trigger new ledger
 	ledgerReadChan <-chan xdr.LedgerCloseMeta
 
-	TickerList            map[importer.TokenPair]importer.Ticker
-	TickerListWithPoolKey map[string]importer.Ticker
-	TokenList             map[string]importer.Token
+	TickerList            map[TokenPair]ITicker
+	TickerListWithPoolKey map[string]ITicker
+	TokenList             map[string]Token
 
 	db *db.DBHandler
 
@@ -41,9 +40,9 @@ func NewUploader(
 ) *Uploader {
 	u := &Uploader{
 		ledgerReadChan:        readChan,
-		TickerListWithPoolKey: make(map[string]importer.Ticker),
-		TickerList:            make(map[importer.TokenPair]importer.Ticker),
-		TokenList:             make(map[string]importer.Token),
+		TickerListWithPoolKey: make(map[string]ITicker),
+		TickerList:            make(map[TokenPair]ITicker),
+		TokenList:             make(map[string]Token),
 		networkPassPhrase:     networkPassPhrase,
 	}
 
@@ -76,7 +75,7 @@ func (u *Uploader) OnStop() error {
 	return nil
 }
 
-func (u *Uploader) UploadNewToken(t importer.Token) {
+func (u *Uploader) UploadNewToken(t Token) {
 	isUpload := false
 	token, found := u.TokenList[t.SorobanContract]
 	if found {
@@ -119,56 +118,5 @@ func (u *Uploader) UploadNewToken(t importer.Token) {
 	}
 }
 
-func (u *Uploader) UploadNewTicker(t importer.Ticker) {
-	isUpload := false
-	pair := importer.GetTokenPair(t.BaseCurrency, t.TargetCurrency)
-	ticker, found := u.TickerList[pair]
-	if found {
-		if ticker.BaseCurrency != t.BaseCurrency ||
-			ticker.TargetCurrency != t.TargetCurrency ||
-			ticker.PoolContract != t.PoolContract {
-			isUpload = true
-			u.Logger.Warn(fmt.Sprintf("ticker unmatch %v - %v", t, ticker))
-
-			// Update Ticker list for now
-			u.TickerList[pair] = t
-			u.TickerListWithPoolKey[t.PoolContract] = t
-		}
-	} else {
-		// check on db
-		tk, err := u.db.GetTicker(t.TickerId)
-		if err != nil {
-			isUpload = true
-		}
-
-		if tk.BaseCurrency != t.BaseCurrency ||
-			tk.TargetCurrency != t.TargetCurrency ||
-			tk.PoolId != t.PoolContract {
-			isUpload = true
-			u.Logger.Warn(fmt.Sprintf("ticker unmatch %v - %v", t, tk))
-		}
-
-		u.Logger.Info(fmt.Sprintf("new ticker uploaded %v", t))
-		u.TickerList[pair] = t
-		u.TickerListWithPoolKey[t.PoolContract] = t
-	}
-
-	if isUpload {
-		ticker := models.Tickers{
-			TickerId:        t.TickerId,
-			BaseCurrency:    t.BaseCurrency,
-			TargetCurrency:  t.TargetCurrency,
-			PoolId:          t.PoolContract,
-			LastPrice:       0,
-			BaseVolume:      0,
-			TargetVolume:    0,
-			High:            0,
-			Low:             0,
-			ShareLiquidity:  0,
-			BaseLiquidity:   0,
-			TargetLiquidity: 0,
-			LiquidityInUsd:  0,
-		}
-		u.db.SetTickers(&ticker)
-	}
+func (u *Uploader) UploadNewTicker(t ITicker) {
 }

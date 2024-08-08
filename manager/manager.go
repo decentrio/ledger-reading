@@ -7,7 +7,6 @@ import (
 
 	"github.com/decentrio/ledger-reading/config"
 	"github.com/decentrio/ledger-reading/exporter"
-	"github.com/decentrio/ledger-reading/importer"
 	"github.com/decentrio/ledger-reading/lib/service"
 	"github.com/decentrio/ledger-reading/uploader"
 	"github.com/stellar/go/support/log"
@@ -22,7 +21,6 @@ type Manager struct {
 
 	// sub services that are controlled by manager services
 	e *exporter.Exporter
-	i *importer.Importer
 	u *uploader.Uploader
 }
 
@@ -51,10 +49,6 @@ func NewManager(
 	// initlialize uploader sub services
 	m.u = uploader.NewUploader(baseLogger, readChan, networkPassPhrase)
 
-	// initialize importer sub services
-	newTokenCb := func(token importer.Token) { m.u.UploadNewToken(token) }
-	newTickerCb := func(ticker importer.Ticker) { m.u.UploadNewTicker(ticker) }
-	m.i = importer.NewImporter(baseLogger, newTokenCb, newTickerCb)
 
 	m.BaseService = *service.NewBaseService("manager", m)
 	for _, opt := range options {
@@ -71,11 +65,6 @@ func (m *Manager) OnStart() error {
 
 	// start uploader services
 	if err := m.u.Start(); err != nil {
-		return err
-	}
-
-	// start importer services
-	if err := m.i.Start(); err != nil {
 		return err
 	}
 

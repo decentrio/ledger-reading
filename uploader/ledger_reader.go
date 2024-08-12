@@ -46,7 +46,7 @@ func (u *Uploader) handleReceiveNewLedger(l xdr.LedgerCloseMeta) {
 	}
 	defer txReader.Close()
 
-	var txs []*IndexerTransactionExtractor
+	var txs []*TransactionExtractor
 	for {
 		tx, err := txReader.Read()
 		if err == io.EOF {
@@ -58,15 +58,19 @@ func (u *Uploader) handleReceiveNewLedger(l xdr.LedgerCloseMeta) {
 			continue
 		}
 
-		txWrapper := NewIndexerTransactionExtractor(tx, l.LedgerSequence(), ledger.LedgerTime)
-		if txWrapper != nil {
+		txWrapper := NewTransactionExtractor(tx, l.LedgerSequence(), ledger.LedgerTime)
+		_, isIvkFn := txWrapper.IsInvokeHostFunctionTx()
+		if txWrapper != nil && isIvkFn {
 			txs = append(txs, txWrapper)
 		}
 	}
 
+	for _, txExt:= range txs {
+		LogData(txExt.Tx.Result.TransactionHash.HexString())
+	}
 }
 
-func (u *Uploader) GetPoolLiquidity(tx *IndexerTransactionExtractor, ticker ITicker) (share, base, target, totalInUsd uint64) {
+func (u *Uploader) GetPoolLiquidity(tx *TransactionExtractor, ticker ITicker) (share, base, target, totalInUsd uint64) {
 	contractData := tx.GetContractDataEntry()
 	for _, cd := range contractData {
 		if cd.ContractId == ticker.PoolContract {
@@ -83,8 +87,8 @@ func (u *Uploader) GetPoolLiquidity(tx *IndexerTransactionExtractor, ticker ITic
 	// calculate in usd
 	baseCurrencyPriceInUsd := 1.0
 	baseLiquidityInUsd := uint64(float64(base) * baseCurrencyPriceInUsd)
- 
-  	targetLiquidityInUsd := uint64(float64(target))
+
+	targetLiquidityInUsd := uint64(float64(target))
 
 	if baseLiquidityInUsd != 0 && targetLiquidityInUsd != 0 {
 		totalInUsd = baseLiquidityInUsd + targetLiquidityInUsd
@@ -96,7 +100,6 @@ func (u *Uploader) GetPoolLiquidity(tx *IndexerTransactionExtractor, ticker ITic
 
 	return share, base, target, totalInUsd
 }
-
 
 func getBaseTokenPrice(tradeType string, offerAmount uint64, returnAmount uint64) float64 {
 	var price float64

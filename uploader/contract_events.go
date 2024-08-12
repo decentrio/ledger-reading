@@ -31,7 +31,7 @@ var (
 	}
 )
 
-func (tx *IndexerTransactionExtractor) GetContractEvents() ([]WasmContractEvent, error) {
+func (tx *TransactionExtractor) GetContractEvents() ([]WasmContractEvent, error) {
 	wasmContractevents := make(map[string]WasmContractEvent)
 	for _, op := range tx.Ops {
 		var order = uint32(1)

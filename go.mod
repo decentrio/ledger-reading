@@ -3,7 +3,7 @@ module github.com/decentrio/ledger-reading
 go 1.22.2
 
 require (
-	github.com/decentrio/converter v0.0.0
+	github.com/decentrio/xdr-converter v0.0.0-20240529083521-70234dd57dd1
 	github.com/go-kit/log v0.2.1
 	github.com/go-logfmt/logfmt v0.5.1
 	github.com/spf13/cobra v1.7.0
@@ -105,5 +105,3 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/decentrio/converter => github.com/decentrio/xdr-converter v0.0.0-20240529063035-30a62c5118d0

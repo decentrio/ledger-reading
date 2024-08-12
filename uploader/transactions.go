@@ -1,9 +1,6 @@
 package uploader
 
 import (
-	"fmt"
-
-	"github.com/decentrio/converter/converter"
 	"github.com/stellar/go/ingest"
 	"github.com/stellar/go/xdr"
 )
@@ -13,7 +10,7 @@ const (
 	FAILED  = "failed"
 )
 
-type PhoenixTransactionExtractor struct {
+type IndexerTransactionExtractor struct {
 	LedgerSequence uint32
 	Tx             ingest.LedgerTransaction
 	Ops            []transactionOperationWrapper
@@ -28,12 +25,7 @@ const (
 	ProvideLiquidity ActionType = "provide_liquidity"
 )
 
-type PhoenixActionTx struct {
-	Type ActionType
-	Tx   *PhoenixTransactionExtractor
-}
-
-func NewPhoenixTransactionExtractor(tx ingest.LedgerTransaction, ledgerSeq uint32, processedUnixTime uint64) *PhoenixActionTx {
+func NewIndexerTransactionExtractor(tx ingest.LedgerTransaction, ledgerSeq uint32, processedUnixTime uint64) *IndexerTransactionExtractor {
 	var ops []transactionOperationWrapper
 	for opi, op := range tx.Envelope.Operations() {
 		operation := transactionOperationWrapper{
@@ -43,103 +35,23 @@ func NewPhoenixTransactionExtractor(tx ingest.LedgerTransaction, ledgerSeq uint3
 			ledgerSequence: ledgerSeq,
 		}
 
-		ops = append(ops, operation)
+		ops = append(ops, operation)	
 	}
 
-	txExt := &PhoenixTransactionExtractor{
+	return &IndexerTransactionExtractor{
 		LedgerSequence: ledgerSeq,
 		Tx:             tx,
 		Ops:            ops,
 		Time:           processedUnixTime,
 	}
-
-	actionType, err := txExt.GetPhoenixActionType()
-	if err != nil {
-		return nil
-	}
-
-	return &PhoenixActionTx{
-		Type: actionType,
-		Tx:   txExt,
-	}
 }
 
-func (tx *PhoenixTransactionExtractor) GetPhoenixActionType() (ActionType, error) {
-	invoke, isIvkFunc := tx.IsInvokeHostFunctionTx()
-	if !isIvkFunc {
-		return Unkown, fmt.Errorf("not a invoke host function")
-	}
 
-	var argsXdr xdr.InvokeContractArgs
-	argsXdr.UnmarshalBinary(invoke.Args)
-	method := string(argsXdr.FunctionName)
-
-	if method == "swap" {
-		fmt.Printf("============\n\nswap\n\n============")
-		return Swap, nil
-	}
-
-	if method == "provide_liquidity" {
-		fmt.Printf("============\n\nprovide_liquidity\n\n============")
-		return ProvideLiquidity, nil
-	}
-
-	return Unkown, fmt.Errorf("unkown method")
-}
-
-func (tx *PhoenixTransactionExtractor) IsInvokeHostFunctionTx() (InvokeTransaction, bool) {
-	var invokeFuncTx InvokeTransaction
-	var isInvokeFuncTx bool
-
-	ops := tx.Tx.Envelope.Operations()
-	for _, op := range ops {
-		if op.Body.Type == xdr.OperationTypeInvokeHostFunction {
-			ihfOp := op.Body.MustInvokeHostFunctionOp()
-			switch ihfOp.HostFunction.Type {
-			case xdr.HostFunctionTypeHostFunctionTypeInvokeContract:
-
-				ic := ihfOp.HostFunction.MustInvokeContract()
-				ca, err := converter.ConvertScAddress(ic.ContractAddress)
-				if err != nil {
-					continue
-				}
-
-				fn := string(ic.FunctionName)
-
-				args, err := ic.MarshalBinary()
-				if err != nil {
-					continue
-				}
-
-				invokeFuncTx.Hash = tx.Tx.Result.TransactionHash.HexString()
-				invokeFuncTx.ContractId = *ca.ContractId
-				invokeFuncTx.FunctionType = "invoke_host_function"
-				invokeFuncTx.FunctionName = fn
-				invokeFuncTx.Args = args
-
-				isInvokeFuncTx = true
-
-				break
-			case xdr.HostFunctionTypeHostFunctionTypeCreateContract:
-				// we do not care about this type
-				continue
-
-			case xdr.HostFunctionTypeHostFunctionTypeUploadContractWasm:
-				// we do not care about this type
-				continue
-			}
-
-		}
-	}
-
-	return invokeFuncTx, isInvokeFuncTx
-}
-
-func (tw *PhoenixTransactionExtractor) GetTransactionHash() string {
+func (tw *IndexerTransactionExtractor) GetTransactionHash() string {
 	return tw.Tx.Result.TransactionHash.HexString()
 }
 
-func (tw *PhoenixTransactionExtractor) GetStatus() string {
+func (tw *IndexerTransactionExtractor) GetStatus() string {
 	if tw.Tx.Result.Successful() {
 		return SUCCESS
 	}
@@ -147,25 +59,25 @@ func (tw *PhoenixTransactionExtractor) GetStatus() string {
 	return FAILED
 }
 
-func (tw *PhoenixTransactionExtractor) GetLedgerSequence() uint32 {
+func (tw *IndexerTransactionExtractor) GetLedgerSequence() uint32 {
 	return tw.LedgerSequence
 }
 
-func (tw *PhoenixTransactionExtractor) GetApplicationOrder() uint32 {
+func (tw *IndexerTransactionExtractor) GetApplicationOrder() uint32 {
 	return tw.Tx.Index
 }
 
-func (tw *PhoenixTransactionExtractor) GetEnvelopeXdr() []byte {
+func (tw *IndexerTransactionExtractor) GetEnvelopeXdr() []byte {
 	bz, _ := tw.Tx.Envelope.MarshalBinary()
 	return bz
 }
 
-func (tw *PhoenixTransactionExtractor) GetResultXdr() []byte {
+func (tw *IndexerTransactionExtractor) GetResultXdr() []byte {
 	bz, _ := tw.Tx.Result.MarshalBinary()
 	return bz
 }
 
-func (tw *PhoenixTransactionExtractor) GetResultMetaXdr() []byte {
+func (tw *IndexerTransactionExtractor) GetResultMetaXdr() []byte {
 	txResultMeta := xdr.TransactionResultMeta{
 		Result:            tw.Tx.Result,
 		FeeProcessing:     tw.Tx.FeeChanges,
@@ -177,7 +89,7 @@ func (tw *PhoenixTransactionExtractor) GetResultMetaXdr() []byte {
 	return bz
 }
 
-func (tw *PhoenixTransactionExtractor) GetTransaction() *Transaction {
+func (tw *IndexerTransactionExtractor) GetTransaction() *Transaction {
 	return &Transaction{
 		Hash:             tw.GetTransactionHash(),
 		Status:           tw.GetStatus(),

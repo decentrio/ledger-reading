@@ -3,41 +3,33 @@ package uploader
 import (
 	"fmt"
 
-	"github.com/decentrio/ledger-reading/database/models"
 )
 
-func (tx *PhoenixTransactionExtractor) ExtractProvideLiquidityTx(u *Uploader) error {
-	pis, err := tx.GetProvideLiquidityInfo(u)
-	if err != nil {
-		u.Logger.Error(fmt.Sprintf("err provide liquidity information %s", err.Error()))
-		return err
-	}
+func (tx *IndexerTransactionExtractor) ExtractProvideLiquidityTx(u *Uploader) error {
+	// pis, err := tx.GetProvideLiquidityInfo(u)
+	// if err != nil {
+	// 	u.Logger.Error(fmt.Sprintf("err provide liquidity information %s", err.Error()))
+	// 	return err
+	// }
 
-	for _, pi := range pis {
-		// add provide_liquidity activity
-		activity := models.Activities{
-			Address:        pi.Sender,
-			ActionType:     string(ProvideLiquidity),
-			BaseCurrency:   pi.Ticker.BaseCurrency,
-			BaseVolume:     pi.BaseVolume,
-			TargetCurrency: pi.Ticker.TargetCurrency,
-			TargetVolume:   pi.TargetVolume,
-			Timestamp:      tx.Time,
-		}
-		err = u.db.CreateActivities(&activity)
+	// for _, pi := range pis {
+	// 	// add provide_liquidity activity
+	// 	activity := models.Activities{
+	// 		Address:        pi.Sender,
+	// 		ActionType:     string(ProvideLiquidity),
+	// 		BaseCurrency:   pi.Ticker.BaseCurrency,
+	// 		BaseVolume:     pi.BaseVolume,
+	// 		TargetCurrency: pi.Ticker.TargetCurrency,
+	// 		TargetVolume:   pi.TargetVolume,
+	// 		Timestamp:      tx.Time,
+	// 	}
 
-		// update tickers
-		_, err = u.db.UpdateTickerLiquidity(pi.Ticker.TickerId, pi.ShareLiquidity, pi.BaseLiquidity, pi.TargetLiquidity, pi.TotalLiquidityInUsd)
-		if err != nil {
-			u.Logger.Error(fmt.Sprintf("err update ticker %s", err.Error()))
-			return err
-		}
-	}
+	// }
 
 	return nil
 }
 
-func (tx *PhoenixTransactionExtractor) GetProvideLiquidityInfo(u *Uploader) ([]ProvideLiquidityInformation, error) {
+func (tx *IndexerTransactionExtractor) GetProvideLiquidityInfo(u *Uploader) ([]ProvideLiquidityInformation, error) {
 	// extract contract event to retrieve data
 	wasmEvents, err := tx.GetContractEvents()
 	if err != nil {

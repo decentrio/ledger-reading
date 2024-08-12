@@ -46,7 +46,7 @@ func (u *Uploader) handleReceiveNewLedger(l xdr.LedgerCloseMeta) {
 	}
 	defer txReader.Close()
 
-	var txs []*PhoenixActionTx
+	var txs []*IndexerTransactionExtractor
 	for {
 		tx, err := txReader.Read()
 		if err == io.EOF {
@@ -58,26 +58,15 @@ func (u *Uploader) handleReceiveNewLedger(l xdr.LedgerCloseMeta) {
 			continue
 		}
 
-		txWrapper := NewPhoenixTransactionExtractor(tx, l.LedgerSequence(), ledger.LedgerTime)
+		txWrapper := NewIndexerTransactionExtractor(tx, l.LedgerSequence(), ledger.LedgerTime)
 		if txWrapper != nil {
 			txs = append(txs, txWrapper)
 		}
 	}
 
-	for _, tx := range txs {
-		switch tx.Type {
-		case Swap:
-			fmt.Printf("============\n\nExtractSwapTx\n\n============")
-			tx.Tx.ExtractSwapTx(u)
-		case ProvideLiquidity:
-			fmt.Printf("============\n\nExtractProvideLiquidityTx\n\n============")
-			tx.Tx.ExtractProvideLiquidityTx(u)
-		default:
-		}
-	}
 }
 
-func (u *Uploader) GetPoolLiquidity(tx *PhoenixTransactionExtractor, ticker ITicker) (share, base, target, totalInUsd uint64) {
+func (u *Uploader) GetPoolLiquidity(tx *IndexerTransactionExtractor, ticker ITicker) (share, base, target, totalInUsd uint64) {
 	contractData := tx.GetContractDataEntry()
 	for _, cd := range contractData {
 		if cd.ContractId == ticker.PoolContract {
@@ -92,11 +81,10 @@ func (u *Uploader) GetPoolLiquidity(tx *PhoenixTransactionExtractor, ticker ITic
 		}
 	}
 	// calculate in usd
-	baseCurrencyPriceInUsd := u.getTokenPriceInUsd(ticker.BaseCurrency)
+	baseCurrencyPriceInUsd := 1.0
 	baseLiquidityInUsd := uint64(float64(base) * baseCurrencyPriceInUsd)
-
-	targetCurrencyPriceInUsd := u.getTokenPriceInUsd(ticker.TargetCurrency)
-	targetLiquidityInUsd := uint64(float64(target) * targetCurrencyPriceInUsd)
+ 
+  	targetLiquidityInUsd := uint64(float64(target))
 
 	if baseLiquidityInUsd != 0 && targetLiquidityInUsd != 0 {
 		totalInUsd = baseLiquidityInUsd + targetLiquidityInUsd
@@ -109,14 +97,6 @@ func (u *Uploader) GetPoolLiquidity(tx *PhoenixTransactionExtractor, ticker ITic
 	return share, base, target, totalInUsd
 }
 
-func (u *Uploader) getTokenPriceInUsd(token string) float64 {
-	if token == UsdcTokenName {
-		return float64(1)
-	} else {
-		price, _ := u.db.GetTokenPriceInUsd(token)
-		return price
-	}
-}
 
 func getBaseTokenPrice(tradeType string, offerAmount uint64, returnAmount uint64) float64 {
 	var price float64

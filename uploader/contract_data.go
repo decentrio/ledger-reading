@@ -12,7 +12,7 @@ const (
 	TargetTokenKey = uint32(2)
 )
 
-func (tw *PhoenixTransactionExtractor) GetPoolLiquidity(data ContractData) (uint64, uint64, uint64, error) {
+func (tw *IndexerTransactionExtractor) GetPoolLiquidity(data ContractData) (uint64, uint64, uint64, error) {
 	var shareLiquidity uint64
 	var baseLiquidity uint64
 	var targetLiquidity uint64
@@ -34,7 +34,7 @@ func (tw *PhoenixTransactionExtractor) GetPoolLiquidity(data ContractData) (uint
 	return shareLiquidity, baseLiquidity, targetLiquidity, nil
 }
 
-func (tw *PhoenixTransactionExtractor) GetContractDataEntry() []ContractData {
+func (tw *IndexerTransactionExtractor) GetContractDataEntry() []ContractData {
 	v3 := tw.Tx.UnsafeMeta.V3
 	if v3 == nil {
 		return nil

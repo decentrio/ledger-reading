@@ -2,75 +2,9 @@ package uploader
 
 import (
 	"fmt"
-	"math"
-	"time"
-
-	"github.com/decentrio/ledger-reading/database/models"
 )
 
-func (tx *PhoenixTransactionExtractor) ExtractSwapTx(u *Uploader) error {
-	tis, err := tx.GetTradeInfo(u)
-	if err != nil {
-		u.Logger.Error(fmt.Sprintf("err get historical trade %s", err.Error()))
-		return err
-	}
-
-	for i, ti := range tis {
-		tradeId := (tx.Ops[0].ID() + time.Now().Unix() + int64(i)) % math.MaxInt32
-		// create historical trade
-		historicalTrade := models.HistoricalTrades{
-			TradeId:        uint32(tradeId),
-			Price:          ti.Price,
-			TickerId:       ti.Ticker.TickerId,
-			BaseVolume:     ti.BaseVolume,
-			TargetVolume:   ti.TargetVolume,
-			TradeTimestamp: tx.Time,
-			TradeType:      ti.TradeType,
-			TxHash:         tx.GetTransactionHash(),
-			Maker:          tx.Tx.Envelope.SourceAccount().ToAccountId().Address(),
-		}
-		u.db.CreateHistoricalTrades(&historicalTrade)
-
-		// create activities
-		activity := models.Activities{
-			Address:        tx.Tx.Envelope.SourceAccount().ToAccountId().Address(),
-			ActionType:     ti.TradeType,
-			BaseCurrency:   ti.Ticker.BaseCurrency,
-			BaseVolume:     ti.BaseVolume,
-			TargetCurrency: ti.Ticker.TargetCurrency,
-			TargetVolume:   ti.TargetVolume,
-			Timestamp:      tx.Time,
-		}
-		u.db.CreateActivities(&activity)
-
-		// update price
-		targetCurrencyPriceInUsd := u.getTokenPriceInUsd(ti.Ticker.TargetCurrency)
-		if targetCurrencyPriceInUsd != float64(0) {
-			price := targetCurrencyPriceInUsd * ti.Price
-			u.db.SetTokenPrice(ti.Ticker.BaseCurrency, price)
-		}
-
-		// get liquidity data
-		share, base, target, totalInUsd := u.GetPoolLiquidity(tx, ti.Ticker)
-		// update data
-		modelTicker := models.Tickers{
-			TickerId:        ti.Ticker.TickerId,
-			BaseCurrency:    ti.Ticker.BaseCurrency,
-			TargetCurrency:  ti.Ticker.TargetCurrency,
-			PoolId:          ti.Ticker.PoolContract,
-			LastPrice:       ti.Price,
-			ShareLiquidity:  share,
-			BaseLiquidity:   base,
-			TargetLiquidity: target,
-			LiquidityInUsd:  totalInUsd,
-		}
-		u.db.SetTickers(&modelTicker)
-	}
-
-	return nil
-}
-
-func (tx *PhoenixTransactionExtractor) GetTradeInfo(u *Uploader) ([]TradeInformation, error) {
+func (tx *IndexerTransactionExtractor) GetTradeInfo(u *Uploader) ([]TradeInformation, error) {
 	//extract contract event to retrieve data
 	wasmEvents, err := tx.GetContractEvents()
 	if err != nil {

@@ -41,7 +41,7 @@ func (e *Exporter) getNewLedger() {
 func (as *Exporter) prepare() (uint32, uint32) {
 	if !as.isSync {
 		from := as.StartLedgerSeq
-		to := from + DefaultPrepareStep
+		to := from + 1
 
 		var ledgerRange backends.Range
 		if to > as.CurrLedgerSeq {

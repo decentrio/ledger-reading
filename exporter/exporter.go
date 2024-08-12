@@ -15,7 +15,7 @@ import (
 
 const (
 	QueueSize          = 10000
-	DefaultPrepareStep = 1280
+	DefaultPrepareStep = 64
 )
 
 const (

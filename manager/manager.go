@@ -16,22 +16,20 @@ type Manager struct {
 	r *lreader.Reader
 }
 
-const (
-	PaddingLedger = 2560
-)
-
 // StateOption sets an optional parameter on the State.
 type ManagerOption func(*Manager)
 
 // NewBaseService creates a new manager.
 func NewManager(
 	baseLogger *log.Entry,
+	fromLedger int32,
+	toLedger int32,
 	options ...ManagerOption,
 ) *Manager {
 	m := &Manager{}
 
 	// initialize exporter sub services
-	m.r = lreader.NewReader(baseLogger)
+	m.r = lreader.NewReader(baseLogger, fromLedger, toLedger)
 
 	m.BaseService = *service.NewBaseService("manager", m)
 	for _, opt := range options {

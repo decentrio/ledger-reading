@@ -4,7 +4,7 @@ import (
 	"github.com/stellar/go/support/log"
 )
 
-func DefaultNewManager() *Manager {
+func DefaultNewManager(from, to int32) *Manager {
 	logger := log.New()
-	return NewManager(logger)
+	return NewManager(logger, from, to)
 }

@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/decentrio/ledger-reading/manager"
+	"github.com/decentrio/ledger-reading/lib/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +29,9 @@ func NewRunNodeCmd() *cobra.Command {
 		Use:     "start",
 		Aliases: []string{"node", "run"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			m := manager.DefaultNewManager()
+			from, to := ParseConfig(cmd)
+
+			m := manager.DefaultNewManager(from, to)
 
 			if err := m.Start(); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
@@ -54,4 +57,18 @@ func NewRunNodeCmd() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func ParseConfig(cmd *cobra.Command) (int32, int32) {
+	fromLedger, err := cmd.Flags().GetInt32(cli.FromLedger)
+	if err != nil {
+		return 52000000, 52000001
+	}
+
+	toLedger, err := cmd.Flags().GetInt32(cli.ToLedger)
+	if err != nil {
+		return 52000000, 52000001
+	}
+	
+	return fromLedger, toLedger
 }

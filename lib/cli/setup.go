@@ -15,7 +15,8 @@ const (
 	HomeFlag   = "home"
 	TraceFlag  = "trace"
 	OutputFlag = "output"
-	Ledger     = "ledger"
+	FromLedger = "from"
+	ToLedger   = "to"
 	Mode       = "mode"
 	NetWork    = "network"
 )
@@ -30,7 +31,8 @@ func PrepareBaseCmd(cmd *cobra.Command, envPrefix, defaultHome string) Executor 
 	cobra.OnInitialize(func() { initEnv(envPrefix) })
 	cmd.PersistentFlags().StringP(HomeFlag, "", defaultHome, "directory for config and data")
 	cmd.PersistentFlags().Bool(TraceFlag, true, "print out full stack trace on errors")
-	cmd.PersistentFlags().Uint32(Ledger, 0, "ledger")
+	cmd.PersistentFlags().Uint32(FromLedger, 52000000, "from")
+	cmd.PersistentFlags().Uint32(ToLedger, 52000001, "to")
 	cmd.PersistentFlags().String(NetWork, "pubnet", "running network pubnet/testnet")
 	cmd.PersistentPreRunE = concatCobraCmdFuncs(bindFlagsLoadViper, cmd.PersistentPreRunE)
 	return Executor{cmd, os.Exit}

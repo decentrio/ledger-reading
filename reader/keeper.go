@@ -12,6 +12,8 @@ type Reader struct {
 	service.BaseService
 
 	db *db.DBHandler
+	FromSeq int32
+	ToSeq  int32
 	wg sync.WaitGroup
 }
 type ReaderOption func(*Reader)
@@ -19,9 +21,14 @@ type ReaderOption func(*Reader)
 func NewReader(
 	// cfg *config.ExporterConfig,
 	baseLogger *log.Entry,
+	from int32,
+	to int32,
 	options ...ReaderOption,
 ) *Reader {
-	r := &Reader{}
+	r := &Reader{
+		FromSeq: from,
+		ToSeq: to,
+	}
 	r.BaseService = *service.NewBaseService("reader", r)
 	for _, opt := range options {
 		opt(r)

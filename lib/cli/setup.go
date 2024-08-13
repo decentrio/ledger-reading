@@ -12,13 +12,12 @@ import (
 )
 
 const (
-	HomeFlag      = "home"
-	TraceFlag     = "trace"
-	OutputFlag    = "output"
-	StartLedger   = "start"
-	CurrentLedger = "curr"
-	Mode          = "mode"
-	NetWork       = "network"
+	HomeFlag   = "home"
+	TraceFlag  = "trace"
+	OutputFlag = "output"
+	Ledger     = "ledger"
+	Mode       = "mode"
+	NetWork    = "network"
 )
 
 // Executable is the minimal interface to *corba.Command, so we can
@@ -31,8 +30,7 @@ func PrepareBaseCmd(cmd *cobra.Command, envPrefix, defaultHome string) Executor 
 	cobra.OnInitialize(func() { initEnv(envPrefix) })
 	cmd.PersistentFlags().StringP(HomeFlag, "", defaultHome, "directory for config and data")
 	cmd.PersistentFlags().Bool(TraceFlag, true, "print out full stack trace on errors")
-	cmd.PersistentFlags().Uint32(StartLedger, 0, "starting ledger")
-	cmd.PersistentFlags().Uint32(CurrentLedger, 0, "current ledger")
+	cmd.PersistentFlags().Uint32(Ledger, 0, "ledger")
 	cmd.PersistentFlags().String(NetWork, "pubnet", "running network pubnet/testnet")
 	cmd.PersistentPreRunE = concatCobraCmdFuncs(bindFlagsLoadViper, cmd.PersistentPreRunE)
 	return Executor{cmd, os.Exit}

@@ -3,12 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"os/signal"
 	"syscall"
 
-	cfg "github.com/decentrio/ledger-reading/config"
-	"github.com/decentrio/ledger-reading/lib/cli"
 	"github.com/decentrio/ledger-reading/manager"
 	"github.com/spf13/cobra"
 )
@@ -31,11 +28,7 @@ func NewRunNodeCmd() *cobra.Command {
 		Use:     "start",
 		Aliases: []string{"node", "run"},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			config, err := ParseConfig(cmd)
-			if err != nil {
-				return err
-			}
-			m := manager.DefaultNewManager(config)
+			m := manager.DefaultNewManager()
 
 			if err := m.Start(); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
@@ -61,58 +54,4 @@ func NewRunNodeCmd() *cobra.Command {
 	}
 
 	return cmd
-}
-
-// ParseConfig retrieves the default environment configuration,
-// sets up the CometBFT root and ensures that the root exists
-func ParseConfig(cmd *cobra.Command) (*cfg.ManagerConfig, error) {
-	conf := cfg.DefaultConfig()
-
-	home, err := cmd.Flags().GetString(cli.HomeFlag)
-	if err != nil {
-		return nil, err
-	}
-	conf.RootDir = home
-	conf.SetRoot(conf.RootDir)
-
-	managerConfigFile := conf.ManagerConfigFile()
-	if cfg.FileExists(managerConfigFile) {
-		conf.LoadManagerConfig(managerConfigFile)
-	}
-
-	var aggregationConfig cfg.ExporterConfig
-	aggregationConfigFile := conf.AggregationConfigFile()
-	if cfg.FileExists(aggregationConfigFile) {
-		aggregationConfig = cfg.LoadAggregationConfig(aggregationConfigFile)
-	} else {
-		startLedger, err := cmd.Flags().GetUint32(cli.StartLedger)
-		if err != nil {
-			return nil, err
-		}
-		if startLedger != 0 {
-			aggregationConfig.StartLedgerHeight = startLedger
-		}
-
-		currLedger, err := cmd.Flags().GetUint32(cli.CurrentLedger)
-		if err != nil {
-			return nil, err
-		}
-		aggregationConfig.CurrLedgerHeight = currLedger
-
-		network, err := cmd.Flags().GetString(cli.NetWork)
-		if err != nil {
-			return nil, err
-		}
-		aggregationConfig.Network = network
-
-		stellarCoreBinaryPath, err := exec.LookPath("stellar-core")
-		if err != nil {
-			return nil, err
-		}
-		aggregationConfig.BinaryPath = stellarCoreBinaryPath
-	}
-
-	conf.ExporterConfig = &aggregationConfig
-
-	return conf, nil
 }

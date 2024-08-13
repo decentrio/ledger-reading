@@ -1,14 +1,10 @@
 package manager
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 
-	"github.com/decentrio/ledger-reading/config"
-	"github.com/decentrio/ledger-reading/exporter"
 	"github.com/decentrio/ledger-reading/lib/service"
-	"github.com/decentrio/ledger-reading/uploader"
+	lreader "github.com/decentrio/ledger-reading/reader"
 	"github.com/stellar/go/support/log"
 )
 
@@ -16,12 +12,8 @@ import (
 type Manager struct {
 	service.BaseService
 
-	// config of Manager
-	cfg *config.ManagerConfig
-
 	// sub services that are controlled by manager services
-	e *exporter.Exporter
-	u *uploader.Uploader
+	r *lreader.Reader
 }
 
 const (
@@ -33,22 +25,13 @@ type ManagerOption func(*Manager)
 
 // NewBaseService creates a new manager.
 func NewManager(
-	cfg *config.ManagerConfig,
 	baseLogger *log.Entry,
 	options ...ManagerOption,
 ) *Manager {
-	m := &Manager{
-		cfg: cfg,
-	}
+	m := &Manager{}
 
 	// initialize exporter sub services
-	m.e = exporter.NewExporter(cfg.ExporterConfig, baseLogger)
-	readChan := m.e.GetLedgerChanPipe()
-	networkPassPhrase := m.e.GetNetworkPassPhrase()
-
-	// initlialize uploader sub services
-	m.u = uploader.NewUploader(baseLogger, readChan, networkPassPhrase)
-
+	m.r = lreader.NewReader(baseLogger)
 
 	m.BaseService = *service.NewBaseService("manager", m)
 	for _, opt := range options {
@@ -64,12 +47,7 @@ func (m *Manager) OnStart() error {
 	m.Logger.Info("start services")
 
 	// start uploader services
-	if err := m.u.Start(); err != nil {
-		return err
-	}
-
-	// start exporter services
-	if err := m.e.Start(); err != nil {
+	if err := m.r.Start(); err != nil {
 		return err
 	}
 
@@ -78,22 +56,7 @@ func (m *Manager) OnStart() error {
 
 func (m *Manager) OnStop() error {
 	m.Logger.Info("stop services")
-	m.e.Stop()
-
-	// save current config
-	asConfig := *m.e.Config
-	asConfig.StartLedgerHeight = m.e.StartLedgerSeq - PaddingLedger
-
-	bz, err := json.Marshal(asConfig)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	fmt.Println(m.cfg.AggregationConfigFile())
-	err = config.WriteState(m.cfg.AggregationConfigFile(), bz, 0777)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	m.r.Stop()
 
 	time.Sleep(time.Second)
 	return nil

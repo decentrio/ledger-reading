@@ -2,11 +2,9 @@ package manager
 
 import (
 	"github.com/stellar/go/support/log"
-
-	"github.com/decentrio/ledger-reading/config"
 )
 
-func DefaultNewManager(cfg *config.ManagerConfig) *Manager {
+func DefaultNewManager() *Manager {
 	logger := log.New()
-	return NewManager(cfg, logger)
+	return NewManager(logger)
 }

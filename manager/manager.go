@@ -13,7 +13,7 @@ type Manager struct {
 	service.BaseService
 
 	// sub services that are controlled by manager services
-	r *lreader.Reader
+	Reader *lreader.Reader
 }
 
 // StateOption sets an optional parameter on the State.
@@ -29,7 +29,7 @@ func NewManager(
 	m := &Manager{}
 
 	// initialize exporter sub services
-	m.r = lreader.NewReader(baseLogger, fromLedger, toLedger)
+	m.Reader = lreader.NewReader(baseLogger, fromLedger, toLedger)
 
 	m.BaseService = *service.NewBaseService("manager", m)
 	for _, opt := range options {
@@ -45,7 +45,7 @@ func (m *Manager) OnStart() error {
 	m.Logger.Info("start services")
 
 	// start uploader services
-	if err := m.r.Start(); err != nil {
+	if err := m.Reader.Start(); err != nil {
 		return err
 	}
 
@@ -54,7 +54,7 @@ func (m *Manager) OnStart() error {
 
 func (m *Manager) OnStop() error {
 	m.Logger.Info("stop services")
-	m.r.Stop()
+	m.Reader.Stop()
 
 	time.Sleep(time.Second)
 	return nil

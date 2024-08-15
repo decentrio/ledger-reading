@@ -31,8 +31,8 @@ func PrepareBaseCmd(cmd *cobra.Command, envPrefix, defaultHome string) Executor 
 	cobra.OnInitialize(func() { initEnv(envPrefix) })
 	cmd.PersistentFlags().StringP(HomeFlag, "", defaultHome, "directory for config and data")
 	cmd.PersistentFlags().Bool(TraceFlag, true, "print out full stack trace on errors")
-	cmd.PersistentFlags().Uint32(FromLedger, 52000000, "from")
-	cmd.PersistentFlags().Uint32(ToLedger, 52000001, "to")
+	cmd.PersistentFlags().Int32(FromLedger, 52214945, "from")
+	cmd.PersistentFlags().Int32(ToLedger, 52214946, "to")
 	cmd.PersistentFlags().String(NetWork, "pubnet", "running network pubnet/testnet")
 	cmd.PersistentPreRunE = concatCobraCmdFuncs(bindFlagsLoadViper, cmd.PersistentPreRunE)
 	return Executor{cmd, os.Exit}

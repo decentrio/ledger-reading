@@ -31,7 +31,7 @@ func NewRunNodeCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			from, to := ParseConfig(cmd)
 
-			m := manager.DefaultNewManager(from, to)
+			m := manager.NewManagerFromTo(from, to)
 
 			if err := m.Start(); err != nil {
 				return fmt.Errorf("failed to start node: %w", err)
@@ -41,7 +41,7 @@ func NewRunNodeCmd() *cobra.Command {
 			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 			go func() {
-				for _ = range c {
+				for range c {
 					if m.IsRunning() {
 						if err := m.Stop(); err != nil {
 							fmt.Printf(err.Error())
@@ -62,12 +62,12 @@ func NewRunNodeCmd() *cobra.Command {
 func ParseConfig(cmd *cobra.Command) (int32, int32) {
 	fromLedger, err := cmd.Flags().GetInt32(cli.FromLedger)
 	if err != nil {
-		return 52000000, 52000001
+		fromLedger = 53012912
 	}
 
 	toLedger, err := cmd.Flags().GetInt32(cli.ToLedger)
 	if err != nil {
-		return 52000000, 52000001
+		toLedger = fromLedger +1
 	}
 	
 	return fromLedger, toLedger

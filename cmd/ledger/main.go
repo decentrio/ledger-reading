@@ -9,6 +9,7 @@ import (
 
 func main() {
 	rootCmd.AddCommand(NewRunNodeCmd())
+	rootCmd.AddCommand(NewContractRead())
 	cmd := cli.PrepareBaseCmd(rootCmd, "CMT", os.ExpandEnv(filepath.Join("$HOME", DefaultCometDir)))
 	if err := cmd.Execute(); err != nil {
 		panic(err)

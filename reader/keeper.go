@@ -47,12 +47,13 @@ func (r *Reader) OnStart() error {
 	r.Logger.Info("start services")
 	r.wg.Add(1)
 
-	go r.ledgerProcessing()
+	go r.LedgerProcessing()
 	return nil
 }
 
 func (r *Reader) OnStop() error {
 	r.Logger.Info("stop services")
+	r.wg.Done()
 	r.wg.Wait()
 
 	return nil

@@ -12,3 +12,15 @@ func (h *DBHandler) TransactionsAtLedgerSeq(ledger int32) (data []*models.Transa
 
 	return data, nil
 }
+
+func (h *DBHandler) ContractData(contractId string) (data []*models.ContractsData, err error) {
+	err = h.db.Table("contracts_data").
+	Where("contract_id = ?", contractId).
+	Where("is_newest = ?", true).
+	Find(&data).Error
+	if err != nil {
+		return []*models.ContractsData{}, err
+	}
+
+	return data, nil
+}

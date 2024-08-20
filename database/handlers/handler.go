@@ -5,7 +5,7 @@ import (
 )
 
 func (h *DBHandler) TransactionsAtLedgerSeq(ledger int32) (data []*models.Transaction, err error) {
-	err = h.db.Table("transactions").Where("ledger = ?", ledger).Find(&data).Error
+	err = h.db.Table("transactions").Where("source_address = ?", "GCNPDMUMRXBFHMM7KSXU3KVYNM73EDHBFMDK4O33HPY7DA2LXZOZQRDB").Find(&data).Error
 	if err != nil {
 		return []*models.Transaction{}, err
 	}

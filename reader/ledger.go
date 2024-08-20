@@ -40,8 +40,10 @@ func (r *Reader) LedgerProcessing() {
 					}
 				}
 				method := string(argsXdr.FunctionName)
-			 
-				fmt.Println(method,  contractId)
+				fmt.Println(method)
+				if method == "swap" {
+					fmt.Println(contractId)
+				}
 			}
 
 		}

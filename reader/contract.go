@@ -21,9 +21,29 @@ func (r *Reader) ContractReading(contractId string) {
 		valSc.UnmarshalBinary(entry.ValueXdr)
 		if keySc.Address != nil {
 			fmt.Println(keySc.Address.AccountId.Address())
-			fmt.Println(valSc.Type)
-			fmt.Println(valSc.MustMap())
+			valMap, ok := valSc.GetMap()
+			if !ok {
+				fmt.Println("This is not a map")
+			} else {
+				var stakeKeySym xdr.ScSymbol = "total_stake"
+				stakeKey, _ := xdr.NewScVal(xdr.ScValTypeScvSymbol, stakeKeySym)
+				stakeValue := ReadMapValue(valMap, stakeKey)
+
+				stakeI128, ok := stakeValue.GetI128()
+				if ok {
+					fmt.Println("total stake value hi:", stakeI128.Hi)
+					fmt.Println("total stake value lo:", stakeI128.Lo)
+				}
+			}
 		}
 	}
 }
 
+func ReadMapValue(xdrMap *xdr.ScMap, key xdr.ScVal) xdr.ScVal {
+	for _, entry := range *xdrMap {
+		if entry.Key.Equals(key) {
+			return entry.Val
+		}
+	}
+	return xdr.ScVal{}
+}

@@ -24,9 +24,9 @@ func (r *Reader) LedgerProcessing() {
 
 		fmt.Println("count txs:", len(txs))
 		for _, tx := range txs {
-			orgTx := convertToOriginTx(tx)
-			ivkFunc, isIvk := IsInvokeHostFunctionTx(&orgTx)
-
+			orgTx := ConvertToOriginTx(tx)
+			ivkFuncs, isIvk := IsInvokeHostFunctionTx(&orgTx)
+			ivkFunc := ivkFuncs[0]
 			if isIvk {
 
 				contractTxs = append(contractTxs, orgTx)
@@ -52,7 +52,7 @@ func (r *Reader) LedgerProcessing() {
 	}
 }
 
-func convertToOriginTx(tx *models.Transaction) ingest.LedgerTransaction {
+func ConvertToOriginTx(tx *models.Transaction) ingest.LedgerTransaction {
 	var envelop xdr.TransactionEnvelope
 	err := envelop.UnmarshalBinary(tx.EnvelopeXdr)
 	if err != nil {
@@ -75,7 +75,8 @@ func convertToOriginTx(tx *models.Transaction) ingest.LedgerTransaction {
 }
 
 
-func IsInvokeHostFunctionTx(tx *ingest.LedgerTransaction) (InvokeTransaction, bool) {
+func IsInvokeHostFunctionTx(tx *ingest.LedgerTransaction) ([]InvokeTransaction, bool) {
+	var invokeFuncTxs []InvokeTransaction
 	var invokeFuncTx InvokeTransaction
 	var isInvokeFuncTx bool
 
@@ -106,8 +107,8 @@ func IsInvokeHostFunctionTx(tx *ingest.LedgerTransaction) (InvokeTransaction, bo
 				invokeFuncTx.Args = args
 
 				isInvokeFuncTx = true
-
-				break
+				invokeFuncTxs = append(invokeFuncTxs, invokeFuncTx)
+				continue
 			case xdr.HostFunctionTypeHostFunctionTypeCreateContract:
 				// we do not care about this type
 				continue
@@ -120,5 +121,5 @@ func IsInvokeHostFunctionTx(tx *ingest.LedgerTransaction) (InvokeTransaction, bo
 		}
 	}
 
-	return invokeFuncTx, isInvokeFuncTx
+	return invokeFuncTxs, isInvokeFuncTx
 }

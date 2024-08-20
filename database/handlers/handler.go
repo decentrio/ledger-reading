@@ -5,9 +5,18 @@ import (
 )
 
 func (h *DBHandler) TransactionsAtLedgerSeq(ledger int32) (data []*models.Transaction, err error) {
-	err = h.db.Table("transactions").Where("source_address = ?", "GCNPDMUMRXBFHMM7KSXU3KVYNM73EDHBFMDK4O33HPY7DA2LXZOZQRDB").Find(&data).Error
+	err = h.db.Table("transactions").Where("seq = ?", ledger).Find(&data).Error
 	if err != nil {
 		return []*models.Transaction{}, err
+	}
+
+	return data, nil
+}
+
+func (h *DBHandler) TransactionByHash(hash string) (data *models.Transaction, err error) {
+	err = h.db.Table("transactions").Where("hash = ?", hash).First(&data).Error
+	if err != nil {
+		return &models.Transaction{}, err
 	}
 
 	return data, nil
@@ -16,7 +25,6 @@ func (h *DBHandler) TransactionsAtLedgerSeq(ledger int32) (data []*models.Transa
 func (h *DBHandler) ContractData(contractId string) (data []*models.ContractsData, err error) {
 	err = h.db.Table("contracts_data").
 	Where("contract_id = ?", contractId).
-	Where("is_newest = ?", true).
 	Find(&data).Error
 	if err != nil {
 		return []*models.ContractsData{}, err

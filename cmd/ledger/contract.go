@@ -20,3 +20,18 @@ func NewContractRead() *cobra.Command {
 
 	return cmd
 }
+
+func NewContractTxsRead() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:  "contract-txs [contract_id]",
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			contractId := args[0]
+			m := manager.DefaultNewManager()
+			m.Reader.ContractReadingTxs(contractId)
+			return nil
+		},
+	}
+
+	return cmd
+}

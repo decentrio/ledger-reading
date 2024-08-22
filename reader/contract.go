@@ -55,31 +55,32 @@ func (r *Reader) ContractReadingTxs(contractId string) {
 		}
 		orgTx := ConvertToOriginTx(tx)
 		ivkFuncs, isIvk := IsInvokeHostFunctionTx(&orgTx)
-		fmt.Println(len(ivkFuncs))
 		if isIvk {
-			for _, ivk := range ivkFuncs {
-				var argsXdr xdr.InvokeContractArgs
-				argsXdr.UnmarshalBinary(ivk.Args)
-				// contractId := ""
-				// if argsXdr.ContractAddress.ContractId != nil {
-				// 	contractId, err = strkey.Encode(strkey.VersionByteContract, argsXdr.ContractAddress.ContractId[:])
-				// 	if err != nil {
-				// 		continue
-				// 	}
-				// }
-				method := string(argsXdr.FunctionName)
+			var argsXdr xdr.InvokeContractArgs
+			argsXdr.UnmarshalBinary(ivkFuncs[0].Args)
+			// contractId := ""
+			// if argsXdr.ContractAddress.ContractId != nil {
+			// 	contractId, err = strkey.Encode(strkey.VersionByteContract, argsXdr.ContractAddress.ContractId[:])
+			// 	if err != nil {
+			// 		continue
+			// 	}
+			// }
+			method := string(argsXdr.FunctionName)
+			if method == "provide_liquidity" {
 				fmt.Println(method)
-			}
 
-			contractData := GetContractDataEntry(orgTx)
-
-			for _, entry := range contractData {
-				fmt.Println("==============================")
-				fmt.Println(entry.ContractId)
-				fmt.Println("/////==============================/////")
-				fmt.Println(entry.Key)
-				fmt.Println("==============================")
-
+				contractData := GetContractDataEntry(orgTx)
+	
+				for _, entry := range contractData {
+					if entry.ContractId == "CBHCRSVX3ZZ7EGTSYMKPEFGZNWRVCSESQR3UABET4MIW52N4EVU6BIZX" {
+						fmt.Println("==============================")
+						fmt.Println(orgTx.Envelope.SourceAccount().ToAccountId().Address())
+						fmt.Println(entry.ContractId)
+						fmt.Println(entry.Key)
+						fmt.Println(entry.Value)
+						fmt.Println("==============================")
+					}
+				}
 			}
 		}
 	}
